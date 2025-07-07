@@ -8,3 +8,4 @@ chmod +x ./e2studio_installer-2025-04.1_linux_host.run
 ./e2studio_installer-2025-04.1_linux_host.run
 This will launch the graphical installer
 
+https://github.com/renesas-rz/rz_linux_distros
