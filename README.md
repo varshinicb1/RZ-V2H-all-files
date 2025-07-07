@@ -1,4 +1,4 @@
-All RZ/V2H related files are here.
+RZ/V2H related files are here.
 
 Reference links : https://www.renesas.com/en/software-tool/rzv-group-multi-os-package#overview
 
