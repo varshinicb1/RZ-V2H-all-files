@@ -282,3 +282,133 @@ yaml
 Layers are ordered in `bblayers.conf` to build the final image.
 
 ---
+
+
+## Section 4: Toolchain, SDK, and Build Preparation
+
+````markdown
+# Section 4: Toolchain, SDK, and Build Preparation
+
+Before starting the build process, it is important to install all required packages on the host system and prepare the SDK environment. This section covers the necessary tools, SDK source structure, and setup script used to prepare the Yocto workspace.
+
+---
+
+## 4.1 Host PC Requirements
+
+**Recommended OS:** Ubuntu 22.04 LTS (64-bit)
+
+### Required Packages
+
+Install dependencies using:
+
+```bash
+sudo apt update && sudo apt install -y \
+    gawk wget git-core diffstat unzip texinfo gcc-multilib \
+    build-essential chrpath socat cpio python3 python3-pip \
+    python3-pexpect xz-utils debianutils iputils-ping \
+    libsdl1.2-dev xterm curl zstd
+````
+
+---
+
+## 4.2 Downloading the Renesas AI SDK (v5.20)
+
+Download the official SDK ZIP:
+
+* [Renesas RZ/V2H AI SDK v5.20](https://www.renesas.com/en/document/sws/rzv2h-ai-sdk-v520-source-code)
+
+You should receive a file named:
+
+```
+RTK0EF0180F04001LINUXAISP_src.zip
+```
+
+Extract the ZIP archive into the `sources/` folder inside your Yocto workspace:
+
+```bash
+mkdir -p sources/meta-rzv-ai-sdk
+cd sources/meta-rzv-ai-sdk
+unzip ~/Downloads/RTK0EF0180F04001LINUXAISP_src.zip
+```
+
+You should now see:
+
+```
+meta-rzv/
+meta-drpai/
+scripts/
+recipes/
+```
+
+These layers will be added to your build configuration.
+
+---
+
+## 4.3 Running the Setup Script
+
+The project includes a script `setup.sh` that clones all required meta-layers and sets up the workspace.
+
+### Example usage:
+
+```bash
+cd rzv2h-pro-desktop-yocto
+chmod +x setup.sh
+./setup.sh
+```
+
+The script will:
+
+* Clone `poky`, `meta-openembedded`, `meta-qt5`, `meta-browser`, `meta-lxqt`
+* Print instructions for verifying the SDK structure
+
+---
+
+## 4.4 Directory Structure After Setup
+
+After completing `setup.sh`, the expected structure is:
+
+```
+rzv2h-pro-desktop-yocto/
+├── build/
+│   └── conf/
+├── boot/
+├── extras/
+├── recipes-core/
+│   └── images/
+├── sources/
+│   ├── poky/
+│   ├── meta-openembedded/
+│   ├── meta-qt5/
+│   ├── meta-browser/
+│   ├── meta-lxqt/
+│   └── meta-rzv-ai-sdk/
+│       ├── meta-rzv/
+│       └── meta-drpai/
+├── setup.sh
+└── README.md
+```
+
+---
+
+## 4.5 Initializing the Build Environment
+
+Once all layers are present, initialize the build environment using:
+
+```bash
+source sources/poky/oe-init-build-env build
+```
+
+This creates and switches to the `build/` directory.
+
+Next, configure the following:
+
+* `conf/bblayers.conf` → list all meta-layers
+* `conf/local.conf` → select packages, features, and image type
+
+These files are included as editable templates in the repository.
+
+---
+
+```
+
+
