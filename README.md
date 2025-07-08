@@ -287,9 +287,7 @@ Layers are ordered in `bblayers.conf` to build the final image.
 ## Section 4: Toolchain, SDK, and Build Preparation
 
 ````markdown
-# Section 4: Toolchain, SDK, and Build Preparation
-
-Before starting the build process, it is important to install all required packages on the host system and prepare the SDK environment. This section covers the necessary tools, SDK source structure, and setup script used to prepare the Yocto workspace.
+#Before starting the build process, it is important to install all required packages on the host system and prepare the SDK environment. This section covers the necessary tools, SDK source structure, and setup script used to prepare the Yocto workspace.
 
 ---
 
