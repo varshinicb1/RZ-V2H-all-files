@@ -273,19 +273,11 @@ Yocto is modular. Each meta-layer contains:
 
 The Renesas SDK structure (based on AI SDK v5.20) looks like:
 
-sources/
-├── poky/
-├── meta-openembedded/
-├── meta-qt5/
-├── meta-lxqt/
-├── meta-browser/
-├── meta-rzv-ai-sdk/
-│ ├── meta-rzv/
-│ └── meta-drpai/
+![image](https://github.com/user-attachments/assets/28a60252-ddd6-4bbb-b0a8-1ed051b64d30)
+
 
 yaml
-Copy
-Edit
+
 
 Layers are ordered in `bblayers.conf` to build the final image.
 
