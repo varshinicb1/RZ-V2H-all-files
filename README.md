@@ -542,8 +542,128 @@ fdisk -l rzv2h-pro-desktop.wic
 
 ```
 
-Let me know when you're ready for **Section 6: Building, Flashing, and Booting** by saying `next`.
+
+## Section 6: Building, Flashing, and Booting
+
+````markdown
+# Section 6: Building, Flashing, and Booting
+
+Once all layers and configuration files are correctly set, you can proceed to build the full OS image, flash it to an SD card, and boot it on the RZ/V2H EVK.
+
+---
+
+## 6.1 Initializing the Build Environment
+
+Before running `bitbake`, you must initialize the build environment from the Yocto workspace:
+
+```bash
+cd rzv2h-pro-desktop-yocto
+source sources/poky/oe-init-build-env build
+````
+
+This creates a `build/` directory if it doesn't already exist, and sets up environment variables for BitBake.
+
+---
+
+## 6.2 Running the Build
+
+To build the custom desktop image defined in `rzv2h-pro-desktop.bb`, use:
+
+```bash
+bitbake rzv2h-pro-desktop
 ```
+
+The build process can take 1–3 hours depending on your system resources.
+
+---
+
+## 6.3 Expected Output
+
+After the build completes, the following files will be available in:
+
+```
+tmp/deploy/images/rzv2h/
+```
+
+Key files:
+
+| File            | Description                                 |
+| --------------- | ------------------------------------------- |
+| `Image`         | Linux kernel image                          |
+| `*.dtb`         | Device tree blob(s) for RZ/V2H              |
+| `*.wic`         | Flashable image for SD/eMMC (boot + rootfs) |
+| `boot.scr`      | U-Boot boot script                          |
+| `modules-*.tgz` | Kernel modules archive                      |
+
+---
+
+## 6.4 Flashing the Image to SD Card
+
+Insert a microSD card (16 GB or larger) and identify its device path using:
+
+```bash
+lsblk
+```
+
+Then flash the `.wic` image:
+
+```bash
+sudo dd if=tmp/deploy/images/rzv2h/rzv2h-pro-desktop.wic of=/dev/sdX bs=4M status=progress
+sync
+```
+
+Replace `/dev/sdX` with the actual device path (e.g., `/dev/sdb`). **Be careful not to overwrite your hard drive.**
+
+---
+
+## 6.5 SD Card Partition Structure
+
+Once written, the SD card will contain:
+
+* **Partition 1 (boot)**: FAT32, includes `Image`, `.dtb`, and `boot.scr`
+* **Partition 2 (rootfs)**: ext4, full Linux filesystem
+
+You can inspect the image using:
+
+```bash
+fdisk -l /dev/sdX
+mount /dev/sdX1 /mnt/boot
+mount /dev/sdX2 /mnt/rootfs
+```
+
+---
+
+## 6.6 Booting on the RZ/V2H EVK
+
+1. Insert the flashed SD card into the board
+2. Connect UART to your PC using a USB-UART converter (115200 baud)
+3. Power on the board
+4. Watch U-Boot and kernel logs via serial console (e.g., `minicom` or `screen`)
+5. If successful, the system will boot to a **LightDM login screen**
+6. Log in and access the full **LXQt GUI desktop**
+
+---
+
+## 6.7 Troubleshooting Boot
+
+### No output on serial console:
+
+* Check UART cable and port settings
+* Ensure boot mode is set to SD card
+* Reflash the SD card using `dd`
+
+### Stuck in U-Boot:
+
+* Use `printenv` to check boot variables
+* Recreate `boot.scr` if necessary (see Section 7)
+
+### Kernel panic:
+
+* Ensure `.dtb` matches your board config
+* Verify rootfs partition is correctly written
+
+---
+
 
 
 
