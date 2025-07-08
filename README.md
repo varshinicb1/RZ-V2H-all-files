@@ -407,6 +407,143 @@ These files are included as editable templates in the repository.
 
 ---
 
+
+## Section 5: Image Configuration and Directory Structure
+
+````markdown
+# Section 5: Image Configuration and Directory Structure
+
+Once the Yocto environment is initialized and meta-layers are in place, the next step is to define how the final image will be built, what it includes, and how it is structured. This is done through two key configuration files and a custom image recipe.
+
+---
+
+Key Configuration Files
+
+ 1. `build/conf/bblayers.conf`
+
+This file defines which layers are included in the build process. It should be populated with the full paths to all meta-layers, such as:
+
+```conf
+BBLAYERS ?= " \
+  ${TOPDIR}/../sources/poky/meta \
+  ${TOPDIR}/../sources/poky/meta-poky \
+  ${TOPDIR}/../sources/meta-openembedded/meta-oe \
+  ${TOPDIR}/../sources/meta-openembedded/meta-networking \
+  ${TOPDIR}/../sources/meta-openembedded/meta-python \
+  ${TOPDIR}/../sources/meta-openembedded/meta-multimedia \
+  ${TOPDIR}/../sources/meta-qt5 \
+  ${TOPDIR}/../sources/meta-browser \
+  ${TOPDIR}/../sources/meta-lxqt \
+  ${TOPDIR}/../sources/meta-rzv-ai-sdk/meta-rzv \
+  ${TOPDIR}/../sources/meta-rzv-ai-sdk/meta-drpai \
+"
+````
+
+2. `build/conf/local.conf`
+
+This file sets machine type, image features, and packages. Example:
+
+```conf
+MACHINE = "rzv2h"
+
+DISTRO_FEATURES:append = " x11 wayland opengl systemd bluetooth wifi v4l2"
+
+IMAGE_FEATURES += "ssh-server-openssh tools-debug package-management"
+
+PACKAGE_CLASSES = "package_ipk"
+
+INIT_MANAGER = "systemd"
+
+EXTRA_IMAGE_FEATURES += "read-only-rootfs overlayfs"
+
+IMAGE_INSTALL:append = " \
+  lightdm lxqt lxqt-config lxqt-panel lxqt-session \
+  pcmanfm-qt lxterminal qtbase qtquickcontrols2 qtdeclarative \
+  chromium-ozone-wayland gstreamer1.0-plugins-base \
+  gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+  networkmanager nm-applet openssh sudo matchbox-keyboard \
+  python3 python3-pyqt5 python3-opencv \
+"
 ```
+
+---
+
+## 5.2 Image Recipe: `rzv2h-pro-desktop.bb`
+
+This recipe defines what gets included in the final root filesystem. Located at:
+
+```
+recipes-core/images/rzv2h-pro-desktop.bb
+```
+
+### Example content:
+
+```bitbake
+SUMMARY = "Full-featured LXQt Desktop Image for RZ/V2H"
+LICENSE = "MIT"
+
+inherit core-image
+
+IMAGE_INSTALL += " \
+  ${CORE_IMAGE_EXTRA_INSTALL} \
+  lightdm lxqt lxqt-config lxqt-panel lxqt-session \
+  pcmanfm-qt lxterminal chromium \
+  qtbase qtquickcontrols2 qtdeclarative \
+  gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+  networkmanager nm-applet openssh sudo \
+  python3 python3-pyqt5 python3-opencv \
+  drpai-driver drpai-runtime \
+"
+```
+
+This results in a desktop image with:
+
+* GUI (LXQt)
+* Browser (Chromium)
+* Terminal and File Manager
+* DRP-AI Runtime
+* Python3 + Qt5
+* GStreamer multimedia stack
+
+---
+
+## 5.3 Output Directory Layout (after bitbake)
+
+After building, you’ll find images in:
+
+```
+tmp/deploy/images/rzv2h/
+├── Image                # Kernel
+├── *.dtb                # Device Tree
+├── rootfs.tar.bz2       # Root filesystem archive
+├── *.wic                # Flashable SD/eMMC image
+├── modules-*.tgz        # Kernel modules
+├── boot.scr             # U-Boot script (optional)
+```
+
+You will typically flash the `.wic` file to an SD card using `dd`.
+
+---
+
+## 5.4 SD Card Partition Layout
+
+A `.wic` file is an image with two partitions:
+
+* **boot (FAT32):** Contains `Image`, `.dtb`, and `boot.scr`
+* **rootfs (ext4):** Contains the entire Linux filesystem with GUI, apps, etc.
+
+You can inspect it using:
+
+```bash
+fdisk -l rzv2h-pro-desktop.wic
+```
+
+---
+
+```
+
+Let me know when you're ready for **Section 6: Building, Flashing, and Booting** by saying `next`.
+```
+
 
 
