@@ -1,66 +1,292 @@
-# 🧠 RZ/V2H OS Build & Boot Guide
+# RZ/V2H OS Build & Boot Guide
 
-_Author: Varshini CB – EdgeHax  
-Last Updated: July 2025_
-
----
-
-## 📘 Overview
-
-This guide provides a step-by-step walkthrough to build, configure, and flash a complete Linux OS image for the **Renesas RZ/V2H** microprocessor platform. It is written for developers, integrators, and product teams who want to bring up a GUI-powered embedded Linux system with optional AI support.
-
-Whether you're building an AI-enabled camera system, a kiosk display, or a custom Linux product, this guide aims to be the **single reference** needed from bare-metal boot to full GUI desktop.
+Author: Varshini CB – EdgeHax  
+Last Updated: July 2025
 
 ---
 
-## 🎯 What This Covers
+## Overview
 
-- Full OS build using **Yocto Project**
-- Using **Renesas AI SDK v5.20**
-- GUI with **LXQt**, Chromium, and apps
-- Flashing via SD card or eMMC
-- Bootloader, DDR init, and device tree handling
-- Kernel and rootfs configuration
-- Debugging and UART console output
-- DRP-AI integration (camera + object detection)
-- Autostarting Qt/Python/Chromium apps
-- 📦 Packaging a production-ready image
+This document provides a step-by-step guide to build, configure, and boot a complete Linux-based operating system for the Renesas RZ/V2H microprocessor platform. It is intended for embedded developers and system integrators who are building graphical Linux systems with support for AI acceleration, camera input, and hardware-level customization.
+
+This guide aims to serve as a single, self-contained reference to bring up an embedded system from initial SDK setup through to a bootable GUI desktop image on RZ/V2H hardware.
 
 ---
 
-## 🛠️ Target Hardware
+## Scope
 
-- **SoC**: Renesas RZ/V2H (R9A09G057H4x series)
-- **Evaluation Kit**: RTK0EF0168C01000BJ (Renesas EVK)
-- **Board Features**:
-  - Quad Cortex-A55 (1.8GHz)
-  - Dual Cortex-R8 + Cortex-M33
-  - DRP-AI Accelerator
-  - DDR4 support
-  - USB 3.2, GbE, MIPI DSI/CSI
-  - HDMI via bridge or USB
-  - SPI/I2C/CAN/UART
+- Building a Linux image using the Yocto Project
+- Integration with the Renesas AI SDK v5.20
+- Configuration of the kernel, device tree, and bootloader
+- Creation of a GUI environment (LXQt, Chromium)
+- Flashing and booting from SD card or eMMC
+- DRP-AI runtime and camera integration
+- Autostart of applications (Qt, Python, or browser-based)
+- Packaging of a complete production-ready image
 
 ---
 
-## ⚠️ Assumptions
+## Target Hardware
 
-You should have:
-- A Linux host system (Ubuntu 22.04 LTS recommended)
-- Familiarity with terminal, SSH, SD card flashing
-- RZ/V2H EVK board or equivalent custom board
-- 15GB+ disk space & 16GB RAM (for Yocto builds)
-
----
-
-## 📦 Final Output
-
-A `.wic` image ready to flash to SD card or eMMC, booting into:
-- LXQt desktop
-- Chromium in kiosk mode (optional)
-- Pre-installed Python3, Qt5, OpenCV
-- DRP-AI-ready GStreamer pipeline
-- Configurable auto-launch dashboard
+- SoC: Renesas RZ/V2H (R9A09G057H4x series)
+- Evaluation Kit: RTK0EF0168C01000BJ or custom baseboard
+- Key Features:
+  - Quad-core Arm Cortex-A55 @ 1.8GHz
+  - Dual Cortex-R8 and single Cortex-M33 (for real-time and low-power domains)
+  - DRP-AI accelerator for vision inference
+  - DDR4 memory support
+  - HDMI (via USB or MIPI bridge), MIPI DSI/CSI
+  - USB 3.2, Gigabit Ethernet
+  - SPI, I2C, UART, CAN-FD support
 
 ---
 
+## Requirements
+
+- Ubuntu 22.04 LTS (host build system)
+- Git, Python3, build-essential, and other Yocto dependencies
+- 15 GB+ of available disk space
+- At least 16 GB RAM for Yocto builds
+- 16 GB or larger SD card
+- Renesas RZ/V2H AI SDK v5.20 (source package)
+
+---
+
+## Output
+
+A bootable `.wic` image that:
+- Boots into a Linux system with LXQt desktop
+- Supports Chromium browser, GStreamer pipelines, and DRP-AI applications
+- Can autostart a custom Qt, Python, or browser-based dashboard
+- Is suitable for production deployment and OTA upgrades
+
+# Section 2: RZ/V2H Hardware Overview
+
+The RZ/V2H is a high-performance application processor from Renesas designed for real-time edge AI applications, combining multiple CPU cores, hardware AI acceleration, rich multimedia support, and industrial-grade peripheral interfaces.
+
+This section summarizes key hardware capabilities of the RZ/V2H SoC relevant to building and booting a custom Linux OS.
+
+---
+
+## 2.1 Processor Architecture
+
+- **CPU Complex:**
+  - 4x Arm Cortex-A55 @ up to 1.8 GHz
+    - Supports 32-bit and 64-bit Armv8-A execution
+    - Ideal for Linux and GUI workloads
+  - 2x Arm Cortex-R8 @ 800 MHz (lockstep capable)
+    - Real-time processing for deterministic tasks
+  - 1x Arm Cortex-M33 @ 200 MHz
+    - Suitable for low-power sensor or control tasks
+
+- **TrustZone** support across all cores
+- Optional ECC for on-chip memory
+
+---
+
+## 2.2 AI Acceleration
+
+- **DRP-AI (Dynamically Reconfigurable Processor + AI Accelerator)**
+  - Low-latency, low-power AI inference engine
+  - Optimized for image classification, object detection, pose estimation
+  - Integrated into the AI SDK v5.20
+  - Supports pre-compiled DRP-AI models via TVM and ONNX
+
+---
+
+## 2.3 Memory Support
+
+- **DDR Interfaces:**
+  - Supports DDR4-2400 / LPDDR4 (x32)
+  - Up to 4 GB typical on EVK
+  - ECC support configurable via boot settings
+
+- **Internal SRAM:**
+  - A55 domain: 512 KB
+  - R8 domain: 512 KB
+  - M33 domain: 128 KB
+
+---
+
+## 2.4 Multimedia and Display
+
+- **Video Input:**
+  - MIPI CSI-2 interface (camera)
+  - USB camera (via USB 3.2)
+
+- **Video Output:**
+  - MIPI DSI output
+  - HDMI supported via external bridge or USB-C
+
+- **Graphics:**
+  - OpenGL ES 2.0/3.1 capable GPU
+  - VPU supports H.264/H.265 encode/decode (via GStreamer OMX plugins)
+
+---
+
+## 2.5 Connectivity
+
+- **Networking:**
+  - Gigabit Ethernet MAC
+  - External PHY required
+
+- **USB:**
+  - USB 3.2 Gen1 (Host/Device x2)
+  - USB 2.0 OTG
+
+- **Serial and Industrial Interfaces:**
+  - UART x4
+  - I2C x6
+  - SPI x3
+  - CAN-FD x2
+  - GPIO banks
+
+- **Storage Interfaces:**
+  - SD/MMC
+  - QSPI Flash (bootable)
+  - eMMC boot via SDHI
+
+---
+
+## 2.6 Boot Modes
+
+- **Supported Boot Devices:**
+  - SD card
+  - eMMC
+  - QSPI NOR Flash
+  - USB (firmware loader mode)
+
+- **Boot Stages:**
+  1. Boot ROM
+  2. Boot Loader (FSBL from Flash or SD)
+  3. U-Boot or Trusted Firmware-A
+  4. Linux Kernel + Device Tree
+  5. Root File System
+
+- **Default EVK Boot Method:**
+  - SD card with `bootparams`, `uImage`, and `.dtb` on 1st partition (FAT32)
+
+---
+
+## 2.7 Security and Isolation
+
+- TrustZone-enabled secure execution environment
+- Secure Boot and cryptographic acceleration
+- Optional ARMv8-A EL3 monitor support
+
+---
+
+## 2.8 Development & Debugging
+
+- On-board JTAG (via 20-pin header)
+- UART0 for serial console
+- USB serial console and firmware download (optional)
+- ST-Link or J-Link support with OpenOCD
+
+---
+
+## 2.9 Supported OS and SDK
+
+- **Yocto-based Linux (provided by Renesas)**
+  - AI SDK v5.20 (includes DRP-AI runtime, GStreamer plugins)
+- **RTOS (optional)** for R8 and M33 domains
+- **Bare-metal or FreeRTOS** on M33
+
+---
+# Section 3: OS Choices and Yocto Architecture
+
+The RZ/V2H supports multiple OS configurations across its multi-core architecture. This section outlines common OS choices, the rationale behind using Yocto for the A55 domain, and how its layered build system enables customization for production use.
+
+---
+
+## 3.1 OS Options for RZ/V2H
+
+The RZ/V2H is designed to support multiple simultaneous OSes running on separate cores:
+
+| Domain | Core(s)         | Supported OS Options                   |
+|--------|------------------|----------------------------------------|
+| A-CPU  | 4x Cortex-A55    | Linux (Yocto-based), Ubuntu RootFS, Android (experimental) |
+| R-CPU  | 2x Cortex-R8     | Bare-metal, RTOS (e.g. eMCOS, FreeRTOS), AutoSAR |
+| M-CPU  | 1x Cortex-M33    | FreeRTOS, Bare-metal, Trusted Execution |
+
+In most applications, the A55 runs Linux with GUI and AI services, while the R8 and M33 run real-time control loops or secure enclave firmware.
+
+---
+
+## 3.2 Why Yocto?
+
+The official Renesas SDK is built on the **Yocto Project**, which provides:
+
+- Full control over root filesystem contents
+- Fine-grained package selection
+- Build-time customization of kernel, bootloader, and device tree
+- Reproducible and portable builds
+- SDK generation for cross-development
+
+Yocto is ideal for production environments where the full Linux stack needs to be version-controlled, optimized, and secure.
+
+---
+
+## 3.3 Yocto Build Components
+
+| Component     | Role                                         |
+|---------------|----------------------------------------------|
+| Poky          | Core Yocto build system and metadata         |
+| BitBake       | Task executor and dependency engine          |
+| meta-qt5      | Adds Qt5 modules (GUI framework)             |
+| meta-lxqt     | Lightweight LXQt desktop environment         |
+| meta-rzv      | Renesas SoC support layer (board config)     |
+| meta-drpai    | DRP-AI support: runtime, kernel modules      |
+| meta-browser  | Chromium support (via Ozone/Wayland)         |
+| meta-openembedded | Additional multimedia/networking utilities |
+
+All of these are referenced in `bblayers.conf` and brought together by a custom image recipe (`rzv2h-pro-desktop.bb`).
+
+---
+
+## 3.4 Build Output Structure
+
+After a successful build, the Yocto output directory contains:
+
+tmp/deploy/images/rzv2h/
+├── Image # Linux kernel
+├── *.dtb # Device tree blob(s)
+├── rootfs.tar.bz2 # Root filesystem archive
+├── .wic # Flashable disk image (SD/eMMC)
+├── modules-.tgz # Kernel modules
+├── boot.scr # U-Boot boot script
+
+yaml
+Copy
+Edit
+
+The `.wic` file is the complete image used for booting the board via SD card or flashing to eMMC.
+
+---
+
+## 3.5 Layering Concept in Yocto
+
+Yocto is modular. Each meta-layer contains:
+- Configuration files (machine definitions, distro settings)
+- Recipes for software packages
+- Patches and build overrides
+
+The Renesas SDK structure (based on AI SDK v5.20) looks like:
+
+sources/
+├── poky/
+├── meta-openembedded/
+├── meta-qt5/
+├── meta-lxqt/
+├── meta-browser/
+├── meta-rzv-ai-sdk/
+│ ├── meta-rzv/
+│ └── meta-drpai/
+
+yaml
+Copy
+Edit
+
+Layers are ordered in `bblayers.conf` to build the final image.
+
+---
