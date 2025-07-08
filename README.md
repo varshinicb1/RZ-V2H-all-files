@@ -1,4 +1,4 @@
-# RZ/V2H OS Build & Boot Guide
+s# RZ/V2H OS Build & Boot Guide
 
 Author: Varshini CB – EdgeHax  
 Last Updated: July 2025
