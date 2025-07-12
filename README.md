@@ -1,3 +1,4 @@
+''' 
 varshini@varshini-Victus-by-HP-Gaming-Laptop-15-fa1xxx:/mnt/extra/rzv2h_sdk$ tree -L 2
 .
 ├── 0001-tesseract.patch
@@ -82,3 +83,4 @@ varshini@varshini-Victus-by-HP-Gaming-Laptop-15-fa1xxx:/mnt/extra/rzv2h_sdk$ tre
 └── rzv2h_ai-sdk_yocto_recipe_v3.00.tar.gz
 
 58 directories, 22 files
+'''
