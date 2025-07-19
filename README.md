@@ -1,9 +1,9 @@
-```
-# Building and Deploying ROS2 Galactic with core-image-weston on RZ/V2H EVK
+
+## Building and Deploying ROS2 Galactic with core-image-weston on RZ/V2H EVK
 
 This guide provides a complete, step-by-step process to build and deploy the `core-image-weston` Yocto image with ROS2 Galactic on the Renesas RZ/V2H evaluation kit (EVK) using Ubuntu 20.04 LTS. It incorporates lessons learned from a successful build, addressing issues like file conflicts and host contamination, to ensure a smooth, one-go process. The guide aligns with the Renesas ROS2 Installation Guide (R01AN7366EJ0110) and is optimized for a system with 16GB RAM (32GB recommended).
 
-## Prerequisites
+Prerequisites
 
 - **Host System**: Fresh Ubuntu 20.04 LTS installation with at least 800GB free disk space (preferably on an SSD) and 16GB RAM (32GB recommended).
 - **RZ/V2H EVK**: Renesas RZ/V2H evaluation kit (R9A09G057 SoC).
